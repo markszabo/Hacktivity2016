@@ -11,6 +11,10 @@ extern "C" {
 os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 static os_timer_t deauth_timer;
 
+// To limit the deauthentication, add your phone's and computer's MAC address here
+uint8_t phone[6] = {0x58,0x44,0x98,0x13,0x80,0x6C};
+uint8_t pc[6] = {0x1C,0x65,0x9D,0xB7,0x8D,0xC6};
+
 // Channel to perform deauth
 uint8_t channel = 1;
 
@@ -129,7 +133,8 @@ void promisc_cb(uint8_t *buf, uint16_t len)
         struct sniffer_buf2 *sniffer = (struct sniffer_buf2*) buf;
     } else {
         struct sniffer_buf *sniffer = (struct sniffer_buf*) buf;
-        if(sniffer->buf[4] == 0x58 ||sniffer->buf[4] == 0x1C) { //if it starts like my PC or phone
+        //if it is my PC or phone
+        if((sniffer->buf[4] == phone[0] && sniffer->buf[5] == phone[1] && sniffer->buf[6] == phone[2] && sniffer->buf[7] == phone[3] && sniffer->buf[8] == phone[4] && sniffer->buf[9] == phone[5]) || (sniffer->buf[4] == pc[0] && sniffer->buf[5] == pc[1] && sniffer->buf[6] == pc[2] && sniffer->buf[7] == pc[3] && sniffer->buf[8] == pc[4] && sniffer->buf[9] == pc[5])) {
           int i=0;
           // Set MACs
           for (i=0; i<6; i++) {

@@ -306,7 +306,7 @@ Let's observe our frame and identify the parts! More info and image source [here
 ```C++
 uint8_t packet[128] = {
 0x80, 0x00, //frame control
-0x00, 0x00, //duration
+0x00, 0x00, //duration - will be overwritten by ESP8266
 /*4*/ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //DA - destination address, broadcast in this case
 /*10*/ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //SA - source address, will be overwritten later
  /*16*/ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //BSSID - same as SA in this case, will be overwritten later
@@ -332,25 +332,63 @@ uint8_t packet[128] = {
 
 Based on this let's extend the basic for arbitrary long SSID. You can do it on your own or use my code from [here](https://github.com/markszabo/Hacktivity2016/blob/master/FakeBeaconESP8266/FakeBeaconESP8266.ino)
 
+## Deauthentication frames
 
+Ideally sending deauthentication frames would be as easy as beacon frames. However the developers of ESP8266, Espressif doesn't want to support this feature, so the `wifi_send_pkt_freedom()` is limited to beacon frames. For some time it was only a rumor, but then someone from Espressif confirmed it [here](http://bbs.espressif.com/viewtopic.php?t=1357):
 
-Deauth attack environment
+>1. wifi_send_pkt_freedom can not send management packets and encrypted packets, beacon is one kind of the management packets. We add this limitation because it may effect other devices.
+>
+>2. If you really want to send beacon, please start from "0x80, 0x00 ... " *(...)* If you start from "0x00,0x00", wifi_send_pkt_freedom will detect the 80211 header and find out that it's a management packet, and send fail.
+>
+>3. wifi_send_pkt_freedom data format : start from 802.11 header, no more extra data in the front.
 
-Download arduino 1.6.5 from link
+But they made a mistake. Officially they have added the functionality in SDK 1.4 with the limitation already in place. But someone discovered, that the function is already presented in the binaries of SDK 1.3, only the function descriptions are missing from the header file. So let's get SDK 1.3 and add the missing declarations to the header file.
 
-Enter arduino's directory, then cd hardware.
+## Setting up the environment
 
-mkdir esp8266com
+1. Close all opened arduino IDE.
 
-cd esp8266com
+1. Download arduino 1.6.5 from [arduino.cc](https://www.arduino.cc/en/Main/OldSoftwareReleases#previous) and decompress it.
 
-git clone https://github.com/esp8266/Arduino.git esp8266
+2. Enter the decompressed directory, then the `hardware` directory: `cd arduino-1.6.5-r5/hardware`
 
-cd esp8266
+3. Create a new directory called `esp8266com`: `mkdir esp8266com`
 
-git checkout 5653b9a59baa25094c891d030214aa956bec452c (the last version with sdk 1.3)
+4. Enter the new directory: `cd esp8266com`
 
-cd tools
+5. Clone the git repository into a new folder called `esp8266`: `git clone https://github.com/esp8266/Arduino.git esp8266` (Alternatively [download it from github](https://github.com/esp8266/Arduino/archive/5653b9a59baa25094c891d030214aa956bec452c.zip), decompress and rename it.)
 
-python get.py
+6. Enter the new directory: `cd esp8266`
 
+7. Revert back to the last commit with SDK 1.3: `git checkout 5653b9a59baa25094c891d030214aa956bec452c` (If you have downloaded the zip directly using the link above, you can skip this step, since you already have this version.)
+
+8. Enter the `tools` directory: `cd tools`
+
+9. Run this python script to get some additional binaries: `python get.py`
+
+## Test the environment
+
+Now let's start the freshly downloaded arduino IDE. Open the previous `FakeBeaconESP8266` project, select the ESP8266 board and try to compile it. It should fail with an error: `'wifi_send_pkt_freedom' was not declared in this scope` since the definition of this function is missing from the header file. If it does not fail, then the IDE might uses the previously downloaded newest SDK. On linux this is located under `~/.arduino15/packages/esp8266`. You can simply delete this folder and restart the arduino IDE. You can also delete it from the Board Manager, though I haven't done it that way. 
+
+Also you might not be able to see the ESP8266 boards under Tools > Board. It can be due to the fact that the IDE misses the `boards.txt` under `hardware/esp8266com/esp8266`. If that's your case, simply [download the latest `boards.txt`](https://raw.githubusercontent.com/esp8266/Arduino/master/boards.txt) and place it there.
+
+If you have the `'wifi_send_pkt_freedom' was not declared in this scope` but no other error, then you can edit the header file. It is located under `arduino-1.6.5-r5/hardware/esp8266com/esp8266/tools/sdk/include/user_interface.h`. Simply add the following lines to the end of the file before the last line (`#endif`):
+```C++
+typedef void (*freedom_outside_cb_t)(uint8 status);
+int wifi_register_send_pkt_freedom_cb(freedom_outside_cb_t cb);
+void wifi_unregister_send_pkt_freedom_cb(void);
+int wifi_send_pkt_freedom(uint8 *buf, int len, bool sys_seq); 
+```
+Save the file and try to recompile the `FakeBeaconESP8266` project. It should succeed now.
+
+## The code
+
+Download the code from [here](https://github.com/markszabo/Hacktivity2016/blob/master/deauth/deauth.ino). It sets up a timer to periodically send the deauth frames. It also sets up a promiscous callback function with `wifi_set_promiscuous_rx_cb(promisc_cb)` to sniff the traffic and parse the MAC addresses and sequence numbers out of it.
+
+To avoid disturbing other's wifi connection, please do not use the public wifi, but set up your own, **open** wifi with your phone and connect to it with your computer. Then note the MAC address of your computer and phone and add it to the 15th and 16th line:
+```C++
+uint8_t phone[6] = {0x58,0x44,0x98,0x13,0x80,0x6C};
+uint8_t pc[6] = {0x1C,0x65,0x9D,0xB7,0x8D,0xC6};
+```
+
+Then ping your phone from your computer and upload the code to the ESP8266. Open Serial Monitor and you should see it picking up your MAC address and the ping should start to fail. If you power it off, ping should be back.
