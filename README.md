@@ -73,14 +73,14 @@ Every guest receives an access code, but you have lost yours. Can you get someon
 3. Change the name of the network in the 18th line: `WiFi.softAP("DNSServer CaptivePortal example");`. In reality we would set it to `HotelHacktivity` but to avoid collusion with others, please set it to something else (eg. add a random number to the end like `HotelHacktivity5943`). Upload & test.
 4. Let's add the `login.php`! Open Examples > ESP8266WebServer > HelloServer to see an example.
 5. Based on HelloServer add the following lines between `webServer.onNotFound([](){...});` and `webServer.begin()`:
-        ```C++
+        ```C
         webServer.on("/login.php", []() {
           webServer.send(200, "text/html", "TODO: implement login form here");
         });
         ```
 6. Upload, connect and go to [anysite.com/login.php](http://anysite.com/login.php).
 7. Add the actual login page. In real life we would save the html code of the actual login page, now let's use my code. Declare the following new variable outside any function (eg. after `String responseHTML`):
-    ```C++
+    ```C
     String login = ""
     "<!DOCTYPE html>"
     "<html>"
