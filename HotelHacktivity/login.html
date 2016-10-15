@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <meta charset="utf-8">
+  <style>
+    body {
+      color: #FFFFFF;
+      background: rgb(0, 132, 121);
+      margin: 0px;
+    }
+    #header {
+      padding: 30px;
+      font-size: 40px;
+      background: rgb(36, 35, 51);
+    }
+    #login {
+      text-align:center;
+      padding: 100px;
+      background: rgb(0, 132, 121);
+    }
+    #submit {
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+<div id="header">
+  <img src="https://hacktivity.com/images/news/170x170/9e13bf40.jpg" width="60px" height="60px"> Hotel Hacktivity Wifi Service
+</div>
+
+<div id="login">
+  <h2>Please enter your access code:</h2>
+  <form action="login.php" method="get">
+   <div>Access code: <input type="text" name="code" autofocus></div>
+   <div id="submit"><input type="submit" value="Submit"></div>
+  </form>
+</div>
+</body>
+</html>
