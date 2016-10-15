@@ -68,70 +68,79 @@ Every guest receives an access code, but you have lost yours. Can you get someon
 
 ### The code
 
-1. Open Examples > DNSServer > CaptivePortal, and upload it.
-2. Connect to the Wifi `DNSServer CaptivePortal example` and go to any http website (eg. [bbc.com](http://www.bbc.com/) or [hotelhacktivity.com](http://www.hotelhacktivity.com/).
-3. Change the name of the network in the 18th line: `WiFi.softAP("DNSServer CaptivePortal example");`. In reality we would set it to `HotelHacktivity` but to avoid collusion with others, please set it to something else (eg. add a random number to the end like `HotelHacktivity5943`). Upload & test.
-4. Let's add the `login.php`! Open Examples > ESP8266WebServer > HelloServer to see an example.
-5. Based on HelloServer add the following lines between `webServer.onNotFound([](){...});` and `webServer.begin()`:
+Open Examples > DNSServer > CaptivePortal, and upload it.
+
+Connect to the Wifi `DNSServer CaptivePortal example` and go to any http website (eg. [bbc.com](http://www.bbc.com/) or [hotelhacktivity.com](http://www.hotelhacktivity.com/).
+
+Change the name of the network in the 18th line: `WiFi.softAP("DNSServer CaptivePortal example");`. In reality we would set it to `HotelHacktivity` but to avoid collusion with others, please set it to something else (eg. add a random number to the end like `HotelHacktivity5943`). Upload & test.
+
+Let's add the `login.php`! Open Examples > ESP8266WebServer > HelloServer to see an example.
+
+Based on HelloServer add the following lines between `webServer.onNotFound([](){...});` and `webServer.begin()`:
 ```C++
 webServer.on("/login.php", []() {
   webServer.send(200, "text/html", "TODO: implement login form here");
 });
 ```
-6. Upload, connect and go to [anysite.com/login.php](http://anysite.com/login.php).
-7. Add the actual login page. In real life we would save the html code of the actual login page, now let's use my code. Declare the following new variable outside any function (eg. after `String responseHTML`):
-    ```C
-    String login = ""
-    "<!DOCTYPE html>"
-    "<html>"
-    "<head>"
-    "  <title>Login</title>"
-    "  <meta charset=\"utf-8\">"
-    "  <style>"
-    "    body {"
-    "      color: #FFFFFF;"
-    "      background: rgb(0, 132, 121);"
-    "      margin: 0px;"
-    "    }"
-    "    #header {"
-    "      padding: 30px;"
-    "      font-size: 40px;"
-    "      background: rgb(36, 35, 51);"
-    "    }"
-    "    #login {"
-    "      text-align:center;"
-    "      padding: 100px;"
-    "      background: rgb(0, 132, 121);"
-    "    }"
-    "    #submit {"
-    "      padding: 10px;"
-    "    }"
-    "  </style>"
-    "</head>"
-    "<body>"
-    "<div id=\"header\">"
-    "  <img src=\""
-    "https://hacktivity.com/images/news/170x170/9e13bf40.jpg"
-    "\" width=\"60px\" height=\"60px\"> Hotel Hacktivity Wifi Service"
-    "</div>"
-    "<div id=\"login\">"
-    "  <h2>Please enter your access code:</h2>"
-    "  <form action=\"login.php\" method=\"get\">"
-    "   <div>Access code: <input type=\"text\" name=\"code\" autofocus></div>"
-    "   <div id=\"submit\"><input type=\"submit\" value=\"Submit\"></div>"
-    "  </form>"
-    "</div>"
-    "</body>"
-    "</html>";
-    ```
-8. Also change the previously added code to use this variable (replace `"TODO: implement login form here"` with `login`):
-    ```
-    webServer.on("/login.php", []() {
-      webServer.send(200, "text/html", login);
-    });
-    ```
-9. Upload and test: go to [anysite.com/login.php](http://anysite.com/login.php) to see the login page, and go to [anysite.com](http://anysite.com/) to see the original captive portal.
-10. Instead of the original captive portal, we need it to redirect the visitors to http://www.hotelhacktivity.com/login.php. So let's change `webServer.onNotFound` into the following:
+
+Upload, connect and go to [anysite.com/login.php](http://anysite.com/login.php).
+
+Add the actual login page. In real life we would save the html code of the actual login page, now let's use my code. Declare the following new variable outside any function (eg. after `String responseHTML`):
+```C++
+String login = ""
+"<!DOCTYPE html>"
+"<html>"
+"<head>"
+"  <title>Login</title>"
+"  <meta charset=\"utf-8\">"
+"  <style>"
+"    body {"
+"      color: #FFFFFF;"
+"      background: rgb(0, 132, 121);"
+"      margin: 0px;"
+"    }"
+"    #header {"
+"      padding: 30px;"
+"      font-size: 40px;"
+"      background: rgb(36, 35, 51);"
+"    }"
+"    #login {"
+"      text-align:center;"
+"      padding: 100px;"
+"      background: rgb(0, 132, 121);"
+"    }"
+"    #submit {"
+"      padding: 10px;"
+"    }"
+"  </style>"
+"</head>"
+"<body>"
+"<div id=\"header\">"
+"  <img src=\""
+"https://hacktivity.com/images/news/170x170/9e13bf40.jpg"
+"\" width=\"60px\" height=\"60px\"> Hotel Hacktivity Wifi Service"
+"</div>"
+"<div id=\"login\">"
+"  <h2>Please enter your access code:</h2>"
+"  <form action=\"login.php\" method=\"get\">"
+"   <div>Access code: <input type=\"text\" name=\"code\" autofocus></div>"
+"   <div id=\"submit\"><input type=\"submit\" value=\"Submit\"></div>"
+"  </form>"
+"</div>"
+"</body>"
+"</html>";
+```
+
+Also change the previously added code to use this variable (replace `"TODO: implement login form here"` with `login`):
+```
+webServer.on("/login.php", []() {
+  webServer.send(200, "text/html", login);
+});
+```
+
+Upload and test: go to [anysite.com/login.php](http://anysite.com/login.php) to see the login page, and go to [anysite.com](http://anysite.com/) to see the original captive portal.
+
+Instead of the original captive portal, we need it to redirect the visitors to http://www.hotelhacktivity.com/login.php. So let's change `webServer.onNotFound` into the following:
     ```
     webServer.onNotFound([]() {
       webServer.sendHeader("Location", String("http://www.hotelhacktivity.com/login.php"), true);
