@@ -144,7 +144,7 @@ Instead of the original captive portal, we need it to redirect the visitors to h
 ```C++
 webServer.onNotFound([]() {
   webServer.sendHeader("Location", String("http://www.hotelhacktivity.com/login.php"), true);
-  webServer.send ( 302, "text/plain", "");
+  webServer.send(302, "text/plain", "");
 });
 ```
 This will send an http response with code 302 (redirect) and Location set to  `http://www.hotelhacktivity.com/login.php` if any page but `/login.php` is visited.
@@ -274,8 +274,64 @@ webServer.on("/collect.php", []() {
   webServer.send(200, "text/plain", sniffed);
 });
 ```
-Now if we go to /collect.php, it will display all the collected access codes. Upload and check it.
-16. Bonus: if the ESP8266 restarts, all the previously recorded access codes are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md).
+Now if we go to [/collect.php](http://www.hotelhacktivity.com/collect.php), it will display all the collected access codes. Upload and check it.
+
+**Bonus**: if the ESP8266 restarts, all the previously recorded access codes are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md).
+
+## Beacon frames
+
+### Introduction
+
+"Beacon frame is one of the management frames in IEEE 802.11 based WLANs. It contains all the information about the network. Beacon frames are transmitted periodically to announce the presence of a wireless LAN. Beacon frames are transmitted by the Access Point (AP) in an infrastructure Basic service set (BSS). In IBSS network beacon generation is distributed among the stations." Source & more info: [Wikipedia](https://en.wikipedia.org/wiki/Beacon_frame)
+
+![Beacon frames in action - from Wikipedia](https://upload.wikimedia.org/wikipedia/commons/7/7b/802.11_Beacon_frame.gif)
+
+### Simpler code
+
+Let's open the [BasicBeacon code](https://github.com/markszabo/Hacktivity2016/blob/master/BasicBeacon/BasicBeacon.ino) and upload it. After upload, you will see a lot of wifi networks with random 6 character SSID appearing. Let's check the code!
+
+The code starts with the following block:
+```C++
+extern "C" {
+  #include "user_interface.h"
+}
+```
+This is used to expose sdk functions which are otherwise not accessible from the Arduino IDE. We will use the `wifi_send_pkt_freedom()` function. Then it defines a big buffer for the beacon packet. In the `setup()` it sets the module to `STATION_MODE` and enables promiscuous mode. These are needed to perform packet injection with the `wifi_send_pkt_freedom()`. In the `loop()` it sets the channel to a random number, replaces the source MAC and BSSID with a random MAC, and the SSID with a random 6 character string. Then we send the frame 3 times with `wifi_send_pkt_freedom()`.
+
+### Beacon frame's structure
+
+![Beacon frame](https://mrncciew.files.wordpress.com/2014/10/cwap-mgmt-beacon-01.png)
+
+Let's observe our frame and identify the parts! More info and image source [here](https://mrncciew.com/2014/10/08/802-11-mgmt-beacon-frame/).
+```C++
+uint8_t packet[128] = {
+0x80, 0x00, //frame control
+0x00, 0x00, //duration
+/*4*/ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //DA - destination address, broadcast in this case
+/*10*/ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //SA - source address, will be overwritten later
+ /*16*/ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //BSSID - same as SA in this case, will be overwritten later
+ /*22*/ 0xc0, 0x6c, //Seq-ctl
+//Frame body starts here
+/*24*/ 0x83, 0x51, 0xf7, 0x8f, 0x0f, 0x00, 0x00, 0x00, //timestamp
+ /*32*/ 0x64, 0x00, //beacon interval
+ /*34*/ 0x01, 0x04, //capability info
+ /* SSID */
+0x00, //ID meaning SSID
+0x06, //length
+0x72, 0x72, 0x72, 0x72, 0x72, 0x72, //SSID name
+0x01, //ID meaning Supported rates
+0x08, //length
+0x82, 0x84, 0x8b, 0x96, 0x24, 0x30, 0x48, 0x6c, //Supported rates
+0x03, //ID meaning channel (?)
+0x01, //length
+0x04 //will be overwritten later with the actual channel
+};
+```
+
+### Extended code
+
+Based on this let's extend the basic for arbitrary long SSID. You can do it on your own or use my code from [here](https://github.com/markszabo/Hacktivity2016/blob/master/FakeBeaconESP8266/FakeBeaconESP8266.ino)
+
 
 
 Deauth attack environment
