@@ -1,10 +1,9 @@
 # Wifi hacking with a 4 dollar microcontroller
-This repository contains code and documentation for my workshop 'Wifi hacking with a 4 dollar microcontroller' held on Hacktivity 2016.
 
 ## Introduction
 
-The ESP8266 is a wifi enabled microcontroller, which is popular among makers thanks to its low price: the base module costs ~$2 and you can get one with USB connector for $4. In this Workshop I will show you three hacks:
-1. **Fake captive portal** - Captive portals are widely used in hotels and other public networks, where the wifi network is open, but upon connection a login page is showed to the user. We will see how to setup a fake captive portal and collect the login credentials. This exercises will show the basic capabilities of the microcontroller. 
+The ESP8266 is a wifi enabled microcontroller, which is popular among makers thanks to its low price: the base module costs ~$2 and you can get one with USB connector for $4. In this workshop I will show you three hacks using this module:
+1. **Fake captive portal** - Captive portals are widely used in hotels and other public networks, where the wifi network is open, but upon connection a login page is showed to the user. We will see how to setup a fake captive portal and collect the login credentials. This exercises will show the basic capabilities of the microcontroller and how to use the existing functions. 
 2. **Send beacon frames** - These packets are used to introduce wifi networks, so if we send them with random SSID and MAC, whenever someone scans for wifi they will see a lot of new wifi networks, but they will not be able to connect to them. 
 3. **Send deauthentication frames** - We will continue with raw packets, and see how to send deauthentication packets to a client to make them drop their connection.
 
@@ -33,7 +32,7 @@ Source and more info: [Wikipedia](https://en.wikipedia.org/wiki/ESP8266), [Espre
 1. Download the Arduino IDE from [arduino.cc](https://www.arduino.cc/en/Main/Software)
 2. Start Arduino IDE, go to File > Preferences and add `http://arduino.esp8266.com/stable/package_esp8266com_index.json` under `Additional board manager`.
 3. Go to Tools > Board > Board Manager, search for ESP8266 and install it.
-4. Go to Tools > Board and select `Generic ESP8266 module` (if you have the WeMos D1, select `WeMos D1 (retired)`).
+4. Go to Tools > Board and select `Generic ESP8266 module` (if your hardware looks like an Arduino, then have the WeMos D1 and select `WeMos D1 (retired)`).
 
 ### Test the environment setup
 
@@ -44,16 +43,16 @@ To test the setup let's upload two simple example: blink and WifiScan.
 1. Go to File > Examples > ESP8266 > Blink
 2. Connect ESP8266 to your computer and select the right port under Tools > Port.
 3. Click Upload
-4. While it compiles (and before upload) press and **hold** the flash button (on the ESP8266) and press reset once, to make the microcontroller enter flash mode. If the upload fails, check the port. If still fails, make sure it enters flash mode. Hold flash and press reset multiple times before it starts to upload. (If you have the WeMos D1 or on other ESP without flash button, you can just simply press Upload and wait. If it fails first, just repeat.)
+4. While it compiles (and before upload) press and **hold** the flash button (on the ESP8266) and press reset once, to make the microcontroller enter flash mode. If the upload fails, check the port. If still fails, make sure it enters flash mode. Hold flash and press reset multiple times before it starts to upload. (If you have the WeMos D1 or an other ESP without flash button, you can just simply press Upload and wait. If it fails first, just repeat.)
 5. The ESP8266 should blink with its build in led.
 6. Bonus: change it to blink faster, try to find an other build in LED (pin definition from the slides might help).
 
 #### WifiScan
 
 1. Go to File > Examples > ESP8266Wifi > WifiScan
-2. Upload it as before
-3. Go to Tools > Serial Monitor and set the Baudrate to 115200 in the bottom right corner
-4. Wait a few seconds and see the nearby Wifi networks listed.
+2. Upload it as before (don't forget to enter flash mode)
+3. Go to Tools > Serial Monitor and set the Baudrate to 115200 (in the bottom right corner)
+4. Wait a few seconds and see the nearby Wifi networks listed. If you see gibberish characters, check the baudrate.
 5. Bonus: display other information on the Wifi networks, for example channel. (hint: [ESP8266WiFi.h](https://github.com/esp8266/Arduino/blob/4897e0006b5b0123a2fa31f67b14a3fff65ce561/libraries/ESP8266WiFi/src/ESP8266WiFi.h)).
 
 ## Fake captive portal
@@ -64,17 +63,17 @@ You are staying in the imaginary Hotel Hacktivity. It has an open wifi `HotelHac
 
 !["Captive portal of Hotel Hacktivity"](https://github.com/markszabo/Hacktivity2016/raw/master/img/hotelhacktivity.png "Captive portal of Hotel Hacktivity")
 
-Every guest receives an access code, but you have lost yours. Can you get someone else's code?
+Every guest receives an access code at check-in, but you have lost yours. Can you get someone else's code?
 
 ### The code
 
 Open Examples > DNSServer > CaptivePortal, and upload it.
 
-Connect to the Wifi `DNSServer CaptivePortal example` and go to any http website (eg. [bbc.com](http://www.bbc.com/) or [hotelhacktivity.com](http://www.hotelhacktivity.com/).
+Connect to the Wifi `DNSServer CaptivePortal example` and go to any http website (eg. [bbc.com](http://www.bbc.com/) or [hotelhacktivity.com](http://www.hotelhacktivity.com/). Doesn't matter if it exists or not.) You will be faced with a captive portal.
 
-Change the name of the network in the 18th line: `WiFi.softAP("DNSServer CaptivePortal example");`. In reality we would set it to `HotelHacktivity` but to avoid collusion with others, please set it to something else (eg. add a random number to the end like `HotelHacktivity5943`). Upload & test.
+First change the name of the network in the 18th line: `WiFi.softAP("DNSServer CaptivePortal example");`. In reality we would set it to `HotelHacktivity` but to avoid collusion with others, please set it to something else (eg. add a random number to the end like `HotelHacktivity5943`, or use your nickname). Upload & test.
 
-Let's add the `login.php`! Open Examples > ESP8266WebServer > HelloServer to see an example.
+Let's add the `login.php`! Open Examples > ESP8266WebServer > HelloServer to see an example, or just follow my instructions.
 
 Based on HelloServer add the following lines between `webServer.onNotFound([](){...});` and `webServer.begin()`:
 ```C++
@@ -83,7 +82,7 @@ webServer.on("/login.php", []() {
 });
 ```
 
-Upload, connect and go to [anysite.com/login.php](http://anysite.com/login.php).
+Upload, connect and go to [anysite.com/login.php](http://anysite.com/login.php) (sine the ESP8266 is working as a DNS server, it will reply to any domain with its own ip address, so the url doesn't matter).
 
 Add the actual login page. In real life we would save the html code of the actual login page, now let's use my code. Declare the following new variable outside any function (eg. after `String responseHTML`):
 ```C++
@@ -149,7 +148,7 @@ webServer.onNotFound([]() {
 ```
 This will send an http response with code 302 (redirect) and Location set to  `http://www.hotelhacktivity.com/login.php` if any page but `/login.php` is visited.
 
-Upload, test the redirect. If you look closely, the image in the header is not displayed (or if it is, then it's from cache). Fortunately html supports base64 encoded images. To do this download the image, resize and compress it (I used jpg quality 50% in Gimp), and then base64 encode it (either use a website like [b64.io](http://b64.io/) or [base64-image.de](https://www.base64-image.de/) or use this linux command: `cat HacktivityLogoSmall.jpg | base64`. Now you can just use my code, change the `login` string into the following:
+Upload, test the redirect. If you look closely, the image in the header is not displayed (or if it is, then it's from cache). Fortunately html supports base64 encoded images. To do this, we would need to download the image, resize and compress it (I used jpg quality 50% in Gimp), and then base64 encode it (either use a website like [b64.io](http://b64.io/) or [base64-image.de](https://www.base64-image.de/) or use this linux command: `cat HacktivityLogoSmall.jpg | base64`. Either do these things, or just use my code below. Change the `login` string into the following:
 ```C++
 String login = ""
 "<!DOCTYPE html>"
@@ -264,7 +263,7 @@ webServer.on("/login2.php", []() {
   webServer.send(200, "text/plain", "Error - unknown error occured, please try again later.");
 });
 ```
-If login2.php is queried with at least one argument and the name of the first argument is code, then it will save the value of that argument to the variable `sniffed`. Then we display an error to the user. As you can see we can access the number of GET/POST parameters by `webServer.args()`, the name of the ith parameter by `webServer.argName(i)` and its value as `webServer.arg(i)`.
+If login2.php is queried with at least one argument and the name of the first argument is code, then it will save the value of that argument to the variable `sniffed`. Then we display an error to the user. As you can see we can access the number of GET/POST parameters by `webServer.args()`, the name of the `i`th parameter by `webServer.argName(i)` and its value as `webServer.arg(i)`.
 
 Upload and test to see the error message upon entering any code.
 
@@ -276,13 +275,13 @@ webServer.on("/collect.php", []() {
 ```
 Now if we go to [/collect.php](http://www.hotelhacktivity.com/collect.php), it will display all the collected access codes. Upload and check it.
 
-**Bonus**: if the ESP8266 restarts, all the previously recorded access codes are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md).
+**Bonus**: since we store the access codes in RAM, if the ESP8266 restarts, they are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md).
 
 ## Beacon frames
 
 ### Introduction
 
-"Beacon frame is one of the management frames in IEEE 802.11 based WLANs. It contains all the information about the network. Beacon frames are transmitted periodically to announce the presence of a wireless LAN. Beacon frames are transmitted by the Access Point (AP) in an infrastructure Basic service set (BSS). In IBSS network beacon generation is distributed among the stations." Source & more info: [Wikipedia](https://en.wikipedia.org/wiki/Beacon_frame)
+"Beacon frame is one of the management frames in IEEE 802.11 based WLANs. It contains all the information about the network. Beacon frames are transmitted periodically to announce the presence of a wireless LAN. Beacon frames are transmitted by the Access Point (AP) in an infrastructure Basic service set (BSS)." Source & more info: [Wikipedia](https://en.wikipedia.org/wiki/Beacon_frame)
 
 ![Beacon frames in action - from Wikipedia](https://upload.wikimedia.org/wikipedia/commons/7/7b/802.11_Beacon_frame.gif)
 
@@ -296,7 +295,7 @@ extern "C" {
   #include "user_interface.h"
 }
 ```
-This is used to expose sdk functions which are otherwise not accessible from the Arduino IDE. We will use the `wifi_send_pkt_freedom()` function. Then it defines a big buffer for the beacon packet. In the `setup()` it sets the module to `STATION_MODE` and enables promiscuous mode. These are needed to perform packet injection with the `wifi_send_pkt_freedom()`. In the `loop()` it sets the channel to a random number, replaces the source MAC and BSSID with a random MAC, and the SSID with a random 6 character string. Then we send the frame 3 times with `wifi_send_pkt_freedom()`.
+This is used to expose sdk functions which are otherwise not accessible from the Arduino IDE. We will use the `wifi_send_pkt_freedom()` function. Then it defines a big buffer for the beacon packet. In the `setup()` it sets the module to `STATION_MODE` and enables promiscuous mode. These are needed to perform packet injection with the `wifi_send_pkt_freedom()` function. In the `loop()` it sets the channel to a random number, replaces the source MAC and BSSID with a random MAC, and the SSID with a random 6 character string. Then we send the frame 3 times with `wifi_send_pkt_freedom()`.
 
 ### Beacon frame's structure
 
@@ -305,7 +304,7 @@ This is used to expose sdk functions which are otherwise not accessible from the
 Let's observe our frame and identify the parts! More info and image source [here](https://mrncciew.com/2014/10/08/802-11-mgmt-beacon-frame/).
 ```C++
 uint8_t packet[128] = {
-0x80, 0x00, //frame control
+0x80, 0x00, //frame control - indicating a beacon frame
 0x00, 0x00, //duration - will be overwritten by ESP8266
 /*4*/ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //DA - destination address, broadcast in this case
 /*10*/ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //SA - source address, will be overwritten later
@@ -322,7 +321,7 @@ uint8_t packet[128] = {
 0x01, //ID meaning Supported rates
 0x08, //length
 0x82, 0x84, 0x8b, 0x96, 0x24, 0x30, 0x48, 0x6c, //Supported rates
-0x03, //ID meaning channel (?)
+0x03, //ID meaning channel
 0x01, //length
 0x04 //will be overwritten later with the actual channel
 };
@@ -330,7 +329,7 @@ uint8_t packet[128] = {
 
 ### Extended code
 
-Based on this let's extend the basic for arbitrary long SSID. You can do it on your own or use my code from [here](https://github.com/markszabo/Hacktivity2016/blob/master/FakeBeaconESP8266/FakeBeaconESP8266.ino)
+Based on this let's extend the basic for arbitrary long SSID. You can do it on your own or use my code from [here](https://github.com/markszabo/Hacktivity2016/blob/master/FakeBeaconESP8266/FakeBeaconESP8266.ino). As you can see I also implemented some code to sort of fuzz a network, meaning for a network named `test` it will send packets with SSID `test`+random combination of space and tabs. All of these networks will appear the same when they user scans for wifi, so they will not be able to distinguish between them.
 
 ## Deauthentication frames
 
@@ -342,7 +341,7 @@ Ideally sending deauthentication frames would be as easy as beacon frames. Howev
 >
 >3. wifi_send_pkt_freedom data format : start from 802.11 header, no more extra data in the front.
 
-But they made a mistake. Officially they have added the functionality in SDK 1.4 with the limitation already in place. But someone discovered, that the function is already presented in the binaries of SDK 1.3, only the function descriptions are missing from the header file. So let's get SDK 1.3 and add the missing declarations to the header file.
+But they made a mistake. Officially they have added the functionality in SDK 1.4 with the limitation already in place. But someone discovered, that the function is already presented in the binaries of SDK 1.3, only the function descriptions are missing from the header file. So let's get SDK 1.3 and add the missing declarations to the header file! Be aware, that this process does not always go easy, so be prepared for some debugging.
 
 ## Setting up the environment
 
@@ -360,19 +359,19 @@ But they made a mistake. Officially they have added the functionality in SDK 1.4
 
 6. Enter the new directory: `cd esp8266`
 
-7. Revert back to the last commit with SDK 1.3: `git checkout 5653b9a59baa25094c891d030214aa956bec452c` (If you have downloaded the zip directly using the link above, you can skip this step, since you already have this version.)
+7. Revert back to the last commit with SDK 1.3: `git checkout 5653b9a59baa25094c891d030214aa956bec452c` (If you have downloaded the zip directly using the link above, you can skip this step, since you already downloaded this version.)
 
 8. Enter the `tools` directory: `cd tools`
 
-9. Run this python script to get some additional binaries: `python get.py`
+9. Run the python script to get some additional binaries: `python get.py`
 
 ## Test the environment
 
-Now let's start the freshly downloaded arduino IDE. Open the previous `FakeBeaconESP8266` project, select the ESP8266 board and try to compile it. It should fail with an error: `'wifi_send_pkt_freedom' was not declared in this scope` since the definition of this function is missing from the header file. If it does not fail, then the IDE might uses the previously downloaded newest SDK. On linux this is located under `~/.arduino15/packages/esp8266`. You can simply delete this folder and restart the arduino IDE. You can also delete it from the Board Manager, though I haven't done it that way. 
+Now let's start the freshly downloaded arduino IDE. Open the previous `FakeBeaconESP8266` project, select the ESP8266 board and try to compile it. It should fail with an error: `'wifi_send_pkt_freedom' was not declared in this scope` since the definition of this function is missing from the header file. If it does not fail, then the IDE might uses the previously downloaded, newer SDK. On linux this is located under `~/.arduino15/packages/esp8266`. You can simply delete this folder and restart the arduino IDE. You can also delete it from the Board Manager, though I haven't tried it that way. 
 
-Also you might not be able to see the ESP8266 boards under Tools > Board. It can be due to the fact that the IDE misses the `boards.txt` under `hardware/esp8266com/esp8266`. If that's your case, simply [download the latest `boards.txt`](https://raw.githubusercontent.com/esp8266/Arduino/master/boards.txt) and place it there.
+Also you might not be able to see the ESP8266 boards under Tools > Board. It can be due to the fact that the IDE misses the `boards.txt` under `arduino-1.6.5-r5/hardware/esp8266com/esp8266`. If that's your case, simply [download the latest `boards.txt`](https://raw.githubusercontent.com/esp8266/Arduino/master/boards.txt) and place it there.
 
-If you have the `'wifi_send_pkt_freedom' was not declared in this scope` but no other error, then you can edit the header file. It is located under `arduino-1.6.5-r5/hardware/esp8266com/esp8266/tools/sdk/include/user_interface.h`. Simply add the following lines to the end of the file before the last line (`#endif`):
+If you have the `'wifi_send_pkt_freedom' was not declared in this scope` but no other error, then you can edit the header file. It is located under `arduino-1.6.5-r5/hardware/esp8266com/esp8266/tools/sdk/include/user_interface.h`. Simply add the following lines to the end of the file before the last line (before `#endif`):
 ```C++
 typedef void (*freedom_outside_cb_t)(uint8 status);
 int wifi_register_send_pkt_freedom_cb(freedom_outside_cb_t cb);
@@ -391,4 +390,4 @@ uint8_t phone[6] = {0x58,0x44,0x98,0x13,0x80,0x6C};
 uint8_t pc[6] = {0x1C,0x65,0x9D,0xB7,0x8D,0xC6};
 ```
 
-Then ping your phone from your computer and upload the code to the ESP8266. Open Serial Monitor and you should see it picking up your MAC address and the ping should start to fail. If you power it off, ping should be back.
+Then ping your phone from your computer and upload the code to the ESP8266. Open Serial Monitor and you should see it picking up your MAC address and the ping should start to fail. If you power the microcontroller off, ping should be back.
