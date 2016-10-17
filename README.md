@@ -3,6 +3,7 @@
 ## Introduction
 
 The ESP8266 is a wifi enabled microcontroller, which is popular among makers thanks to its low price: the base module costs ~$2 and you can get one with USB connector for $4. In this workshop I will show you three hacks using this module:
+
 1. **Fake captive portal** - Captive portals are widely used in hotels and other public networks, where the wifi network is open, but upon connection a login page is showed to the user. We will see how to setup a fake captive portal and collect the login credentials. This exercises will show the basic capabilities of the microcontroller and how to use the existing functions. 
 2. **Send beacon frames** - These packets are used to introduce wifi networks, so if we send them with random SSID and MAC, whenever someone scans for wifi they will see a lot of new wifi networks, but they will not be able to connect to them. 
 3. **Send deauthentication frames** - We will continue with raw packets, and see how to send deauthentication packets to a client to make them drop their connection.
@@ -32,7 +33,7 @@ Source and more info: [Wikipedia](https://en.wikipedia.org/wiki/ESP8266), [Espre
 1. Download the Arduino IDE from [arduino.cc](https://www.arduino.cc/en/Main/Software)
 2. Start Arduino IDE, go to File > Preferences and add `http://arduino.esp8266.com/stable/package_esp8266com_index.json` under `Additional board manager`.
 3. Go to Tools > Board > Board Manager, search for ESP8266 and install it.
-4. Go to Tools > Board and select `Generic ESP8266 module` (if your hardware looks like an Arduino, then have the WeMos D1 and select `WeMos D1 (retired)`).
+4. Go to Tools > Board and select `Generic ESP8266 module` (if your hardware looks like an Arduino, then you have the WeMos D1 and you need to select `WeMos D1 (retired)`).
 
 ### Test the environment setup
 
