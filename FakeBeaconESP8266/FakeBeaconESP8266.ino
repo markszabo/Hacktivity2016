@@ -10,8 +10,6 @@ void setup() {
   wifi_promiscuous_enable(1); 
 }
 
-
-
 void loop() {
   //sendBeacon("test"); //sends beacon frames with the SSID 'test'
   //sendRandomBeacon(10); //sends beacon frames with 10 character long random SSID

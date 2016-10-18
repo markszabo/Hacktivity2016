@@ -41,7 +41,8 @@ To test the setup let's upload two simple example: blink and WifiScan.
 
 #### Blink
 
-1. Go to File > Examples > ESP8266 > Blink
+1. Go to File > Examples > Basics > Blink
+2. Rewrite every 13 to 2, since the ESP8266 has its build-in led on GPIO 2.
 2. Connect ESP8266 to your computer and select the right port under Tools > Port.
 3. Click Upload
 4. While it compiles (and before upload) press and **hold** the flash button (on the ESP8266) and press reset once, to make the microcontroller enter flash mode. If the upload fails, check the port. If still fails, make sure it enters flash mode. Hold flash and press reset multiple times before it starts to upload. (If you have the WeMos D1 or an other ESP without flash button, you can just simply press Upload and wait. If it fails first, just repeat.)
@@ -276,7 +277,7 @@ webServer.on("/collect.php", []() {
 ```
 Now if we go to [/collect.php](http://www.hotelhacktivity.com/collect.php), it will display all the collected access codes. Upload and check it.
 
-**Bonus**: since we store the access codes in RAM, if the ESP8266 restarts, they are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md).
+**Bonus**: since we store the access codes in RAM, if the ESP8266 restarts, they are gone. Implement some permanent storage for the codes! (Hint: use [EEPROM](https://github.com/esp8266/Arduino/tree/master/libraries/EEPROM) or [ESP8266's filesystem](https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md)).
 
 ## Beacon frames
 
